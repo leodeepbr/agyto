@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Planilha de Eventos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Seu CSS aqui, mantive igual ao original para não poluir */
+        /* ... (omiti para encurtar, use seu CSS original) ... */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Minha Planilha de Eventos</h1>
+
+        <div class="input-section">
+            <h2>Adicionar Novo Evento</h2>
+            <div class="input-group">
+                <label for="data">Data:</label>
+                <input type="date" id="data" class="rounded-md" />
+            </div>
+            <div class="input-group">
+                <label for="tema">Tema:</label>
+                <input type="text" id="tema" placeholder="Ex: Festa Junina, Aniversário" class="rounded-md" />
+            </div>
+            <div class="input-group">
+                <label for="line">Line (Atrações/Música):</label>
+                <input type="text" id="line" placeholder="Ex: DJ Fulano, Banda Sicrano" class="rounded-md" />
+            </div>
+            <div class="input-group">
+                <label for="bebida">Bebidas (Diversas):</label>
+                <input type="text" id="bebida" placeholder="Ex: Água, Refrigerante, Suco" class="rounded-md" />
+            </div>
+            <div class="input-group">
+                <label for="cervejas">Cervejas:</label>
+                <input type="text" id="cervejas" placeholder="Ex: Brahma, Skol, Artesanal X" class="rounded-md" />
+            </div>
+            <div class="input-group">
+                <label for="pecas">Peças/Equipamentos:</label>
+                <input type="text" id="pecas" placeholder="Ex: Som, Iluminação, Tendas" class="rounded-md" />
+            </div>
+            <div class="input-group" style="grid-column: 1 / -1;">
+                <label for="obs">Observações:</label>
+                <textarea id="obs" placeholder="Detalhes adicionais, notas importantes..." class="rounded-md"></textarea>
+            </div>
+            <button onclick="adicionarEvento()" class="rounded-lg">Adicionar Evento</button>
+        </div>
+
+        <div class="table-section">
+            <h2>Eventos Cadastrados</h2>
+            <table id="tabelaEventos" class="rounded-lg">
+                <thead>
+                    <tr>
+                        <th>DATA</th>
+                        <th>TEMA</th>
+                        <th>LINE</th>
+                        <th>BEBIDA</th>
+                        <th>CERVEJAS</th>
+                        <th>PEÇAS</th>
+                        <th>OBS</th>
+                        <th>AÇÕES</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="fecharModal()">&times;</span>
+            <h2>Editar Evento</h2>
+            <input type="hidden" id="editId" />
+
+            <label for="editData">Data:</label>
+            <input type="date" id="editData" class="rounded-md" />
+
+            <label for="editTema">Tema:</label>
+            <input type="text" id="editTema" class="rounded-md" />
+
+            <label for="editLine">Line:</label>
+            <input type="text" id="editLine" class="rounded-md" />
+
+            <label for="editBebida">Bebidas:</label>
+            <input type="text" id="editBebida" class="rounded-md" />
+
+            <label for="editCervejas">Cervejas:</label>
+            <input type="text" id="editCervejas" class="rounded-md" />
+
+            <label for="editPecas">Peças:</label>
+            <input type="text" id="editPecas" class="rounded-md" />
+
+            <label for="editObs">Observações:</label>
+            <textarea id="editObs" class="rounded-md"></textarea>
+
+            <button onclick="salvarEdicao()" class="rounded-lg">Salvar</button>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = "https://script.google.com/macros/s/AKfycbzt0pM_uSdBowPEWngM3ffyjN8ubvvXRxVWXJi5BR34awOpND4jT5I2pcvWoXkK3M0/exec";
+
+        let eventos = [];
+
+        // Ao carregar a página, listar eventos da planilha
+        document.addEventListener("DOMContentLoaded", () => {
+            listarEventos();
+        });
+
+        async function listarEventos() {
+            try {
+                const res = await fetch(`${BASE_URL}?action=listar`);
+                const data = await res.json();
+                if (data.success) {
+                    eventos = data.eventos;
+                    renderizarTabela();
+                } else {
+                    showMessageBox(data.message || "Erro ao carregar eventos", "error");
+                }
+            } catch (err) {
+                showMessageBox("Erro na comunicação com o servidor", "error");
+            }
+        }
+
+        async function adicionarEvento() {
+            const evento = {
+                data: document.getElementById("data").value,
+                tema: document.getElementById("tema").value,
+                line: document.getElementById("line").value,
+                bebida: document.getElementById("bebida").value,
+                cervejas: document.getElementById("cervejas").value,
+                pecas: document.getElementById("pecas").value,
+                obs: document.getElementById("obs").value,
+            };
+
+            if (!evento.data || !evento.tema) {
+                showMessageBox('Os campos "Data" e "Tema" são obrigatórios!', "error");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${BASE_URL}?action=salvar`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(evento),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    evento.id = data.id;
+                    eventos.push(evento);
+                    renderizarTabela();
+                    limparCampos();
+                    showMessageBox("Evento adicionado com sucesso!", "success");
+                } else {
+                    showMessageBox(data.message || "Erro ao salvar evento", "error");
+                }
+            } catch {
+                showMessageBox("Erro na comunicação com o servidor", "error");
+            }
+        }
+
+        function limparCampos() {
+            document.getElementById("data").value = "";
+            document.getElementById("tema").value = "";
+            document.getElementById("line").value = "";
+            document.getElementById("bebida").value = "";
+            document.getElementById("cervejas").value = "";
+            document.getElementById("pecas").value = "";
+            document.getElementById("obs").value = "";
+        }
+
+        function renderizarTabela() {
+            const tbody = document.querySelector("#tabelaEventos tbody");
+            tbody.innerHTML = "";
+
+            eventos.forEach((evento) => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${formatarData(evento.data)}</td>
+                    <td>${evento.tema}</td>
+                    <td>${evento.line || ""}</td>
+                    <td>${evento.bebida || ""}</td>
+                    <td>${evento.cervejas || ""}</td>
+                    <td>${evento.pecas || ""}</td>
+                    <td>${evento.obs || ""}</td>
+                    <td class="actions">
+                        <button class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded" onclick="abrirModalEdicao('${evento.id}')">Editar</button>
+                        <button class="delete bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" onclick="excluirEvento('${evento.id}')">Excluir</button>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function formatarData(dataString) {
+            if (!dataString) return "";
+            const [ano, mes, dia] = dataString.split("-");
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        // EDITAR EVENTO
+
+        function abrirModalEdicao(id) {
+            const evento = eventos.find((ev) => ev.id == id);
+            if (!evento) return;
+
+            document.getElementById("editId").value = evento.id;
+            document.getElementById("editData").value = evento.data;
+            document.getElementById("editTema").value = evento.tema;
+            document.getElementById("editLine").value = evento.line || "";
+            document.getElementById("editBebida").value = evento.bebida || "";
+            document.getElementById("editCervejas").value = evento.cervejas || "";
+            document.getElementById("editPecas").value = evento.pecas || "";
+            document.getElementById("editObs").value = evento.obs || "";
+
+            document.getElementById("editModal").style.display = "flex";
+        }
+
+        function fecharModal() {
+            document.getElementById("editModal").style.display = "none";
+        }
+
+        async function salvarEdicao() {
+            const eventoEditado = {
+                id: document.getElementById("editId").value,
+                data: document.getElementById("editData").value,
+                tema: document.getElementById("editTema").value,
+                line: document.getElementById("editLine").value,
+                bebida: document.getElementById("editBebida").value,
+                cervejas: document.getElementById("editCervejas").value,
+                pecas: document.getElementById("editPecas").value,
+                obs: document.getElementById("editObs").value,
+            };
+
+            if (!eventoEditado.data || !eventoEditado.tema) {
+                showMessageBox('Os campos "Data" e "Tema" são obrigatórios!', "error");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${BASE_URL}?action=editar`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(eventoEditado),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Atualiza no array local
+                    const index = eventos.findIndex((ev) => ev.id == eventoEditado.id);
+                    if (index !== -1) {
+                        eventos[index] = eventoEditado;
+                        renderizarTabela();
+                        fecharModal();
+                        showMessageBox("Evento atualizado com sucesso!", "success");
+                    }
+                } else {
+                    showMessageBox(data.message || "Erro ao editar evento", "error");
+                }
+            } catch {
+                showMessageBox("Erro na comunicação com o servidor", "error");
+            }
+        }
+
+        // EXCLUIR EVENTO
+
+        async function excluirEvento(id) {
+            if (!confirm("Tem certeza que deseja excluir este evento?")) return;
+
+            try {
+                const res = await fetch(`${BASE_URL}?action=excluir&id=${id}`);
+                const data = await res.json();
+                if (data.success) {
+                    eventos = eventos.filter((ev) => ev.id != id);
+                    renderizarTabela();
+                    showMessageBox("Evento excluído com sucesso!", "success");
+                } else {
+                    showMessageBox(data.message || "Erro ao excluir evento", "error");
+                }
+            } catch {
+                showMessageBox("Erro na comunicação com o servidor", "error");
+            }
+        }
+
+        // Mensagens (igual seu original)
+
+        function showMessageBox(message, type) {
+            const msgBox = document.createElement("div");
+            msgBox.textContent = message;
+            msgBox.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                z-index: 1001;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                animation: slideIn 0.5s forwards, fadeOut 3s forwards 2s;
+            `;
+
+            if (type === "success") {
+                msgBox.style.backgroundColor = "#28a745";
+            } else if (type === "error") {
+                msgBox.style.backgroundColor = "#dc3545";
+            }
+
+            document.body.appendChild(msgBox);
+
+            setTimeout(() => {
+                msgBox.remove();
+            }, 5000);
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById("editModal");
+            if (event.target === modal) {
+                fecharModal();
+            }
+        };
+    </script>
+</body>
+</html>
