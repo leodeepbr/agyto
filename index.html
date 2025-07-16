@@ -4,10 +4,223 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Planilha de Eventos</title>
+    <!-- Tailwind CSS CDN for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Seu CSS aqui, mantive igual ao original para não poluir */
-        /* ... (omiti para encurtar, use seu CSS original) ... */
+        /* Custom styles for better aesthetics and specific overrides */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font as per instructions */
+            background-color: #f0f2f5; /* Light gray background */
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px; /* Rounded corners for the main container */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            max-width: 1000px; /* Increased max-width for better table display */
+            margin: 40px auto; /* Centered with top/bottom margin */
+        }
+        h1, h2 {
+            color: #2c3e50; /* Darker blue-gray for headings */
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 700; /* Bold headings */
+        }
+        .input-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid for inputs */
+            gap: 20px; /* Increased gap */
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 1px solid #e0e0e0; /* Lighter border */
+            border-radius: 8px; /* Rounded corners for input section */
+            background-color: #fdfdfd; /* Slightly off-white background */
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-section label {
+            font-weight: 600; /* Semi-bold labels */
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 0.95rem; /* Slightly smaller font for labels */
+        }
+        .input-section input[type="date"],
+        .input-section input[type="text"],
+        .input-section textarea {
+            width: 100%;
+            padding: 10px 12px; /* More padding */
+            border: 1px solid #d0d0d0; /* Subtle border */
+            border-radius: 6px; /* Rounded corners for inputs */
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition on focus */
+        }
+        .input-section input[type="date"]:focus,
+        .input-section input[type="text"]:focus,
+        .input-section textarea:focus {
+            border-color: #007bff; /* Blue border on focus */
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Light blue shadow on focus */
+            outline: none; /* Remove default outline */
+        }
+        .input-section textarea {
+            min-height: 60px; /* Taller textarea */
+            resize: vertical;
+        }
+        .input-section button {
+            grid-column: 1 / -1; /* Button spans all columns */
+            padding: 12px 25px;
+            background-color: #28a745; /* Green add button */
+            color: white;
+            border: none;
+            border-radius: 8px; /* Rounded button */
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.2); /* Soft shadow for button */
+        }
+        .input-section button:hover {
+            background-color: #218838; /* Darker green on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+        .table-section {
+            margin-top: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate; /* Use separate for rounded corners on cells */
+            border-spacing: 0; /* Remove space between cells */
+            margin-top: 25px;
+            border-radius: 8px; /* Rounded corners for the entire table */
+            overflow: hidden; /* Ensures border-radius applies */
+        }
+        table th, table td {
+            border: 1px solid #e0e0e0; /* Lighter border for cells */
+            padding: 12px 15px; /* More padding in cells */
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        table th {
+            background-color: #007bff; /* Blue header */
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase; /* Uppercase headers */
+            letter-spacing: 0.5px;
+        }
+        table tr:nth-child(even) {
+            background-color: #f8f9fa; /* Lighter stripe for even rows */
+        }
+        table tr:hover {
+            background-color: #e9ecef; /* Light gray on row hover */
+        }
+        .actions button {
+            background-color: #ffc107; /* Yellow for edit */
+            color: #333; /* Dark text for yellow button */
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 8px; /* Spacing between buttons */
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .actions button.delete {
+            background-color: #dc3545; /* Red for delete */
+            color: white;
+        }
+        .actions button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Modal specific styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 30px;
+            border: 1px solid #888;
+            border-radius: 10px; /* Rounded corners for modal */
+            width: 90%; /* Responsive width */
+            max-width: 600px; /* Max width for larger screens */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* Deeper shadow */
+            position: relative;
+            animation: fadeIn 0.3s ease-out; /* Fade-in animation */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 32px; /* Larger close button */
+            font-weight: bold;
+            position: absolute; /* Position relative to modal-content */
+            top: 10px;
+            right: 20px;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-content label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        .modal-content input[type="date"],
+        .modal-content input[type="text"],
+        .modal-content textarea {
+            width: calc(100% - 24px); /* Adjust for padding and border */
+            padding: 10px 12px;
+            margin-bottom: 15px;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .modal-content button {
+            background-color: #007bff; /* Blue save button */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            float: right; /* Align to the right */
+            transition: background-color 0.3s ease;
+        }
+        .modal-content button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+        /* Clearfix for float */
+        .modal-content::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
     </style>
 </head>
 <body>
@@ -104,7 +317,6 @@
 
         let eventos = [];
 
-        // Ao carregar a página, listar eventos da planilha
         document.addEventListener("DOMContentLoaded", () => {
             listarEventos();
         });
@@ -202,8 +414,6 @@
             return `${dia}/${mes}/${ano}`;
         }
 
-        // EDITAR EVENTO
-
         function abrirModalEdicao(id) {
             const evento = eventos.find((ev) => ev.id == id);
             if (!evento) return;
@@ -249,7 +459,6 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    // Atualiza no array local
                     const index = eventos.findIndex((ev) => ev.id == eventoEditado.id);
                     if (index !== -1) {
                         eventos[index] = eventoEditado;
@@ -264,8 +473,6 @@
                 showMessageBox("Erro na comunicação com o servidor", "error");
             }
         }
-
-        // EXCLUIR EVENTO
 
         async function excluirEvento(id) {
             if (!confirm("Tem certeza que deseja excluir este evento?")) return;
@@ -284,8 +491,6 @@
                 showMessageBox("Erro na comunicação com o servidor", "error");
             }
         }
-
-        // Mensagens (igual seu original)
 
         function showMessageBox(message, type) {
             const msgBox = document.createElement("div");
